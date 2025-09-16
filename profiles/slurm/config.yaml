@@ -1,0 +1,33 @@
+executor: "slurm"
+
+default-resources:
+    mem_mb: 2000
+    runtime: 15  # in minutes
+    cpus: 1
+
+set-resources:
+    test:
+        mem_mb: 2000
+        time_min: 15
+    snare_download_fastq:
+        mem_mb: 12000
+        runtime: 15  # in minutes
+        cpus: 1
+    snare_star_alignment:
+        mem_mb: 30000
+        runtime: 60  # in minutes
+        cpus: 1
+        cpus_per_task: 8
+    call_peaks_snare:
+        mem_mb: 16000
+        runtime: 20  # in minutes
+    snare_count_each_cell:
+        mem_mb: 16000
+        runtime: 30  # in minutes
+
+seconds-between-status-checks: 2
+max-status-checks-per-second: 1
+jobs: 1
+keep-incomplete: true
+use-conda: true
+slurm-init-seconds-before-status-checks: 5
