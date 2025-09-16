@@ -1,8 +1,20 @@
+
+# snakemake execution format:
+# input: script + other input files
+# output: log + other output files
+# conda: env name, being activated before running the script.
+#   Conda path should be  exported in shell (bashrc) i.e export PATH=/my/path/miniconda/bin:$PATH
+#   create conda envs with yaml files in the repo
+# params: other parameters, like output dir
+# shell: create dir and run script with input and output files, redirect stdout and stderr to log file
+# if --profile profiles/slurm is used, it will sbatch the job automatically,
+#   otherwise it will run locally
+
+
+#old format:
+# run with sbatch manually, without profile.
 sbatch_params = "--mail-user=avishai.wizel@mail.huji.ac.il --export=ALL,conda_path=/sci/labs/yotamd/lab_share/avishai.wizel/python_envs/miniconda/bin/,lmod=/etc/profile.d/huji-lmod.sh"
-log_dir = "/sci/labs/yotamd/lab_share/avishai.wizel/eRNA/PMID_33564857_breast_scRNA/logs/"
-
-paths=" . /etc/profile.d/huji-lmod.sh; export conda_path=/sci/labs/yotamd/lab_share/avishai.wizel/python_envs/miniconda/bin/ &&"
-
+#TODO: covert to use slurm profile
 
 rule test:
     input:
@@ -26,6 +38,8 @@ rule test:
 #snATAC-seq and snRNA-seq in the same cell
 #-------------------------------- download data --------------------------------#
 home_dir="GSE126074_SNARE_seq"
+
+# 01- download raw fastq data
 rule snare_download_fastq:
     input:
         script = "scripts/download_fastq.sh"
@@ -46,7 +60,7 @@ rule snare_download_fastq:
         '''
 
 
-#download available counts data
+#02- download available counts data
 rule SNARE_seq_download_counts:
     output:
         atac_counts = "GSE126074_SNARE_seq/01_raw_data/GSE126074/GSE126074_CellLineMixture_SNAREseq_chromatin_counts.tsv",
@@ -64,7 +78,7 @@ rule SNARE_seq_download_counts:
         '''
 
 #-------------------------------- process RNA-seq data --------------------------------#
-#align fastq to genome with STAR
+#03- align fastq to genome with STAR
 rule snare_star_alignment:
     input:
         script = "scripts/alignment.sh",
@@ -87,7 +101,7 @@ rule snare_star_alignment:
         '''
 
 
-# subset bam only for cells passed QC from paper 
+#04- subset bam only for cells passed QC from paper 
 
 rule subset_BAM_SNARE_seq:
     input:
@@ -115,6 +129,7 @@ rule subset_BAM_SNARE_seq:
 # First, we call peaks using MACS2 with the RNA reads from the filtered BAM file in order to identify transcribed regions.
 # We than can intersect enhancers annotations with the peaks found in the RNA data to find eRNA  expression in out data.
 
+# 05- call peaks with MACS2
 rule call_peaks_snare:
     input:
         script = "scripts/masc2_run.sh",
@@ -135,6 +150,7 @@ rule call_peaks_snare:
         "SNARE_seq" \
         > {output.log} 2>&1
         '''
+# 06 - get_genes_annotations
 # get genes and regulatory features annotations from ensembl
 # combine both annotations into one gff file (all_with_regulation_annotaions)
 # all_with_regulation_annotaions contains all enhancers 
@@ -157,7 +173,7 @@ rule get_genes_annotations:
         > {output.log} 2>&1
         '''
 
-# get enhancers regions that not overlap with RNA-producing or gene-associated regions 
+# 07- get enhancers regions that not overlap with RNA-producing or gene-associated regions
 rule get_unique_enhancers_regions:
     input:
         script = "scripts/filter_unique_enhancers_regions.sh",
@@ -175,6 +191,7 @@ rule get_unique_enhancers_regions:
         > {output.log} 2>&1
         '''
 
+# 07- count peaks overlapping with enhancers
 # count peaks (narrowPeak) that overlap with :
 # 1. unique enhancers regions (in file stats_file_enhancers)  
 # 2.  with all genomic regions including non-unique enhancers (in file stats_file_all_regions)
@@ -346,6 +363,23 @@ rule snare_all:
         rules.snare_count_each_cell.output.log
     shell:
         "echo 'done'"
+
+
+# ---------------------------------------------------------------------------- #
+#                               10X_PBMC_GEX_ATAC                              #
+# ---------------------------------------------------------------------------- #
+
+rule download_10X_atac:
+    #data description link: https://support.10xgenomics.com/single-cell-multiome-atac-gex/datasets/1.0.0/pbmc_granulocyte_sorted_10k
+    shell:
+        '''
+        mkdir -p ./10X_PBMC/01_raw_data
+        cd ./10X_PBMC/01_raw_data
+        wget https://github.com/wukevin/babel/raw/refs/heads/main/data/10x/atac_v1_pbmc_10k_filtered_peak_bc_matrix.h5
+        '''
+
+
+
 # ---------------------------------------------------------------------------- #
 #                          PMID_33564857_breast_scRNA                          #
 # ---------------------------------------------------------------------------- #
@@ -437,15 +471,3 @@ rule run_babel_SNARE_seq:
         '''
 
 
-# ---------------------------------------------------------------------------- #
-#                               10X_PBMC_GEX_ATAC                              #
-# ---------------------------------------------------------------------------- #
-
-rule download_10X_atac:
-    #data description link: https://support.10xgenomics.com/single-cell-multiome-atac-gex/datasets/1.0.0/pbmc_granulocyte_sorted_10k
-    shell:
-        '''
-        mkdir -p ./10X_PBMC/01_raw_data
-        cd ./10X_PBMC/01_raw_data
-        wget https://github.com/wukevin/babel/raw/refs/heads/main/data/10x/atac_v1_pbmc_10k_filtered_peak_bc_matrix.h5
-        '''
