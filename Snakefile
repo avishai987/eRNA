@@ -24,7 +24,7 @@ rule test:
 # ---------------------------------------------------------------------------- #
 
 #snATAC-seq and snRNA-seq in the same cell
-
+#-------------------------------- download data --------------------------------#
 home_dir="GSE126074_SNARE_seq"
 rule snare_download_fastq:
     input:
@@ -63,6 +63,7 @@ rule SNARE_seq_download_counts:
         head -n 1 GSE126074_CellLineMixture_SNAREseq_cDNA_counts.tsv | tr '\t' '\n' > barcodes.tsv
         '''
 
+#-------------------------------- process RNA-seq data --------------------------------#
 #align fastq to genome with STAR
 rule snare_star_alignment:
     input:
@@ -87,7 +88,6 @@ rule snare_star_alignment:
 
 
 # subset bam only for cells passed QC from paper 
-# sbatch -n 1 -J samtools  --mem=30G  --time=1:0:0  --output="snake_run.log" --wrap="snakemake subset_BAM_SNARE_seq --cores 1 --keep-incomplete"
 
 rule subset_BAM_SNARE_seq:
     input:
@@ -110,6 +110,7 @@ rule subset_BAM_SNARE_seq:
         {output.bam_filtered} \
         > {output.log} 2>&1
         '''
+#-------------------------------- call peaks and count eRNA --------------------------------#
 
 # First, we call peaks using MACS2 with the RNA reads from the filtered BAM file in order to identify transcribed regions.
 # We than can intersect enhancers annotations with the peaks found in the RNA data to find eRNA  expression in out data.
@@ -207,7 +208,7 @@ rule snare_peaks_stats:
         > {output.log} 2>&1;
         '''
 
-
+#-------------------------------- count eRNA --------------------------------#
 # convert bed to GTF- req for htseq
 rule snare_bed_to_gtf_enhancers:
     input:
@@ -240,6 +241,43 @@ rule snare_count_each_cell:
 		{input.bam} {input.gtf} {output.mat}\
         > {output.log} 2>&1;
         '''
+#-------------------------------- associate eRNA with chromatin regions --------------------------------#
+# convert chromatin counts regions (first column) to bed format
+rule snare_chromatin_regions_to_bed:
+    input:
+        script = "scripts/chromatin_regions_to_bed.sh",
+        chromatin_file = rules.SNARE_seq_download_counts.output.atac_counts
+    output:
+        log = "GSE126074_SNARE_seq/07_regions_to_erna/chromatin_regions_to_bed.log",
+        bed_file = "GSE126074_SNARE_seq/07_regions_to_erna/chromatin_regions.bed"
+    params:
+        dir = "GSE126074_SNARE_seq/07_regions_to_erna/"
+    shell:
+        '''
+        mkdir -p {params.dir};
+        {input.script} \
+        {input.chromatin_file} {output.bed_file}\
+        > {output.log} 2>&1;
+        '''
+
+# associate enhancers with chromatin
+rule snare_associate_enhancers_with_regions:
+    input:
+        script = "scripts/associate_inhancers_with_regions.sh",
+        regions_file = rules.snare_chromatin_regions_to_bed.output.bed_file,
+        enhancers_file = rules.get_unique_enhancers_regions.output.uniqe_enhancers
+    output:
+        log = "GSE126074_SNARE_seq/07_regions_to_erna/associate_enhancers_with_regions.log",
+        associated_file = "GSE126074_SNARE_seq/07_regions_to_erna/associated_enhancers_with_chromatin.bed"
+    shell:
+        '''
+        {input.script} \
+        {input.regions_file} \
+        {input.enhancers_file} \
+        {output.associated_file} \
+        > {output.log} 2>&1;
+        '''
+#-------------------------------- with known specific cell type enhancers --------------------------------#
 
 # download enhancers annotations by cell type
 rule download_annotations:
