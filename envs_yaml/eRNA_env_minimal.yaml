@@ -1,0 +1,17 @@
+name: eRNA
+channels:
+  - bioconda
+  - jamespreed
+  - conda-forge
+dependencies:
+  - samtools=1.22.1
+  - sra-tools=3.2.1
+  - bamtools=2.5.3
+  - star=2.7.11b
+  - conda-minify=0.1.2
+  - htseq=2.0.9
+  - bedtools=2.31.1
+  - pip=25.2
+  - pip:
+    - Cython==0.29.37
+    - MACS2==2.2.9.1
