@@ -149,9 +149,9 @@ rule snare_06_get_genes_annotations:
 # 07- get enhancers regions that not overlap with RNA-producing or gene-associated regions
 rule snare_07_unique_enhancers:
     input:
-        script = "scripts/filter_unique_enhancers_regions.sh",
+        script = "scripts/filter_unqiue_enhancers_just_exon.sh",
         features_gff = rules.snare_06_get_genes_annotations.output.features_gff,
-        regulation_gff = rules.snare_06_get_genes_annotations.output.regulation_gff,
+        regulation_gff = rules.snare_06_get_genes_annotations.output.regulation_gff
     output:
         log = "GSE126074_SNARE_seq/05_non_gene_body_peaks/unique_enhancers_log.txt",
         uniqe_enhancers = "GSE126074_SNARE_seq/05_non_gene_body_peaks/uniqe_enhancers.bed"
@@ -281,6 +281,7 @@ rule snare_13_counts_analysis:
         input:
             script = "GSE126074_SNARE_seq/08_counts_analysis/analysis.ipynb",
             counts = rules.snare_10_count_each_cell.output.mat,
+            associated_file = rules.snare_12_associate_enhancers_with_regions.output.associated_file
         output:
             report =  'GSE126074_SNARE_seq/08_counts_analysis/report/analysis.html'
         params:
