@@ -325,19 +325,7 @@ rule snare_13_counts_analysis:
 
 
 
-# subset sc-ATACseq to enhancers loci and scRNA-seq to var genes
-rule filter_rna_and_atac:
-      input:
-        script = home_dir +"/scripts/run_Rscript.sh",
-        r_scrpit = home_dir +"/r_notebooks/filter_data.Rmd"
-      params:
-        report =  home_dir + '/05_filtered_data/filter_data.html'
-      shell:
-        '''
-        sbatch {sbatch_params} --mem=8G --time=1:0:0 --output={home_dir}/logs/{rule}_%j.log  \
-	      {input.script} \
-	      {input.r_scrpit} {params.report}
-       '''
+
        
 rule snare_all:
     input:
