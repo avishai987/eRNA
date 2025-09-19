@@ -1,3 +1,8 @@
+#old format:
+# run with sbatch manually, without profile.
+sbatch_params = "--mail-user=avishai.wizel@mail.huji.ac.il --export=ALL,conda_path=/sci/labs/yotamd/lab_share/avishai.wizel/python_envs/miniconda/bin/,lmod=/etc/profile.d/huji-lmod.sh"
+#TODO: covert to use slurm profile
+
 
 # ---------------------------------------------------------------------------- #
 #                              GSE126074_SNARE_seq-  BABEL                     #

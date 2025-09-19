@@ -1,3 +1,6 @@
+home_dir="GSE126074_SNARE_seq"
+
+
 # workflow for measurement of snare-seq specific cell type enhancers
 module snare_all_enhancers:
     snakefile: "Snakefile"
