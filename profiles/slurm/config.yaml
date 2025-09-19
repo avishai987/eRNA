@@ -9,21 +9,34 @@ set-resources:
     test:
         mem_mb: 2000
         time_min: 15
-    snare_download_fastq:
+    snare_01_download_fastq:
         mem_mb: 12000
         runtime: 15  # in minutes
         cpus: 1
-    snare_star_alignment:
+    snare_03_alignment:
         mem_mb: 30000
         runtime: 60  # in minutes
         cpus: 1
         cpus_per_task: 8
-    call_peaks_snare:
+    snare_05_call_peaks:
         mem_mb: 16000
         runtime: 20  # in minutes
-    snare_count_each_cell:
+    snare_10_count_each_cell:
         mem_mb: 16000
         runtime: 30  # in minutes
+    snare_13_counts_analysis:
+        mem_mb: 16000
+        runtime: 10  # in minutes
+    PBMC_10X_02_download_fastq:
+        mem_mb: 8000
+        runtime: 720  # in minutes
+    PBMC_10X_03_check_md5sum:
+        mem_mb: 8000
+        runtime: 60  # in minutes
+    PBMC_10X_04_untar_fastq:
+        mem_mb: 8000
+        runtime: 60  # in minutes
+    
 
 seconds-between-status-checks: 2
 max-status-checks-per-second: 1
