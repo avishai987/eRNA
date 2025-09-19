@@ -1,0 +1,7 @@
+name: eRNA_htseq
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::htseq=2.0.9

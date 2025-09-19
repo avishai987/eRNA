@@ -1,0 +1,11 @@
+name: eRNA_macs2
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - wheel=0.45.1
+  - python=3.9.23
+  - pip:
+      - cython==0.29.37
+      - macs2==2.2.9.1

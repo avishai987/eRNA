@@ -1,0 +1,7 @@
+name: eRNA_bedtools
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::2.31.1

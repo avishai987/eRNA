@@ -1,0 +1,8 @@
+name: eRNA_bamtools
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::bamtools=2.5.3
+  - bioconda::samtools=1.22

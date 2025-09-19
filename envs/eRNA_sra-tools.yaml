@@ -1,0 +1,7 @@
+name: eRNA_sra-tools
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::sra-tools=3.2.1

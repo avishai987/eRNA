@@ -1,0 +1,8 @@
+name: eRNA_star
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::star=2.7.11b
+
