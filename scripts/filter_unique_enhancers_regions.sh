@@ -7,7 +7,7 @@ REGULATORY_GFF=$2        # GFF3 file with regulatory elements (e.g. enhancers)
 OUTPUT_BED=$3      # Final output file with filtered enhancers
 
 # List of feature types to exclude (RNA-producing or gene-associated regions)
-EXCLUDE_FEATURES="exon|mRNA|lnc_RNA|CDS|three_prime_UTR|five_prime_UTR|gene|transcript|ncRNA_gene|pseudogene|pseudogenic_transcript|unconfirmed_transcript|tRNA|rRNA|snoRNA|miRNA|snRNA|scRNA|V_gene_segment|J_gene_segment|C_gene_segment"
+EXCLUDE_FEATURES="exon"
 
 # Temporary files
 TMP_FEATURES_BED="features_exclude.bed"
