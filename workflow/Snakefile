@@ -12,6 +12,7 @@
 
 # each dataset has its own  dir, where all input, output, logs, scripts etc are stored
 # each dataset has its own Snakefile, which includes this main Snakefile
+ensembl_113_star_index = "/sci/data/reference_data/Homo_sapiens/Ensembl/GRCh38/Sequence/STARIndex/Ens113/"
 
 
 module snare:
@@ -19,16 +20,28 @@ module snare:
 
 use rule * from snare 
 
+module snare_bwa:
+    snakefile: "snare_bwa.smk"
+
+use rule * from snare_bwa as snare_bwa_*
+
+module snare_count_by_atac:
+    snakefile: "snare_count_by_atac.smk"
+
+use rule * from snare_count_by_atac as snare_count_by_atac_*
+
+module PBMC_10X:
+    snakefile: "PBMC_10X.smk"
+use rule * from PBMC_10X as PBMC_10X_*
+
+module test:
+    snakefile: "test.smk"
 
 
-rule test:
-    input:
-        script = "./test/test.sh"
-    output:
-        log = "test_log.txt"
+use rule * from test as test_*
+
+module test2:
+    snakefile: "test2.smk"
 
 
-    shell:
-        '''
-        {input.script}  > {output.log} 2>&1
-        '''
+use rule * from test2 as test2_*

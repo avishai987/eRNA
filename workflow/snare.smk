@@ -1,5 +1,4 @@
 
-ensembl_113_star_index = "/sci/data/reference_data/Homo_sapiens/Ensembl/GRCh38/Sequence/STARIndex/Ens113/"
 
 
 
@@ -149,7 +148,7 @@ rule snare_06_get_genes_annotations:
 # 07- get enhancers regions that not overlap with RNA-producing or gene-associated regions
 rule snare_07_unique_enhancers:
     input:
-        script = "scripts/filter_unqiue_enhancers_just_exon.sh",
+        script = "scripts/filter_unique_enhancers_regions.sh",
         features_gff = rules.snare_06_get_genes_annotations.output.features_gff,
         regulation_gff = rules.snare_06_get_genes_annotations.output.regulation_gff
     output:
@@ -290,8 +289,7 @@ rule snare_13_counts_analysis:
             "eRNA_jupyter"
         shell:
             '''
-            echo {input} > io_files.txt;
-            echo {output} >> io_files.txt;
+
             mkdir -p GSE126074_SNARE_seq/08_counts_analysis/report;
             jupyter nbconvert --to html --execute {input.script} --output-dir {params.dir} --output analysis.html  --log-level=INFO
             '''
