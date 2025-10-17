@@ -1,0 +1,30 @@
+name: erna_r
+channels:
+  - anaconda
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.3.3
+  - r-seurat=4.4.0
+  - r-seuratobject=4.1.4
+  - r-ggplot2=3.5.2
+  - r-ggpubr=0.6.1
+  - libstdcxx=15.1.0
+  - ipykernel=6.30.1
+  - r-languageserver
+  - r-irkernel
+  - anaconda::jupyter_console
+  - conda-forge::r-ggstatsplot
+  - r-tidyverse
+  - r-dplyr
+  - r-magrittr
+  - r-stringr
+  - r-data.table
+  - r-gridextra
+  - r-kableextra
+  - r-knitr
+  - r-matrix
+  - bioconda::r-archr
+  - conda-forge::r-biocmanager
+  - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg38

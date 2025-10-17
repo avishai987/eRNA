@@ -1,0 +1,9 @@
+name: eRNA_subread
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bamtools=2.5.3
+  - samtools=1.22
+  - bioconda::subread=2.1.1

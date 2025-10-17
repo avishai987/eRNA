@@ -1,0 +1,6 @@
+name: eRNA_bwa
+channels:
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::bwa=0.7.19
