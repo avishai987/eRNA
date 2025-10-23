@@ -113,6 +113,10 @@ rule extract:
         --log={log} \
         --whitelist {params.dir}/whitelist.tsv | pigz -c -p 8 > {output.fastq_R2_extracted}
         """
+module snare_star:
+    snakefile: "snare.smk"
+
+use rule * from snare_star
 
 rule align:
     input:
@@ -131,6 +135,65 @@ rule align:
         """
         mkdir -p {params.dir};
         bwa mem -t {params.cores} {params.ref_genome} {input.fastq_R2_extracted} 2> {log} | samtools view -Sb - > {output.bam};
-        samtools sort -o {output.bam} {output.bam} >> {log} 2>&1;
-        samtools index {output.bam} >> {log} 2>&1;
+        """
+
+rule assign_to_genes:
+    input:
+        bam = rules.align.output.bam,
+        gtf = rules.snare_09_bed_to_gtf_enhancers.output.gtf
+    output:
+        counts = "10X_PBMC/04_count/pbmc_granulocyte_sorted_10k_counts.txt",
+        bam = "10X_PBMC/04_count/pbmc_granulocyte_sorted_10k.bam.no_XS.bam.featureCounts.bam",
+    params:
+        dir = "10X_PBMC/04_count/",
+        feature_type = "regulatory_region",
+        threads = 8
+    conda:
+        "eRNA_subread"
+    log:
+        "10X_PBMC/04_count/featureCounts.log"
+    shell:
+        """
+        mkdir -p {params.dir};
+        # remove XS tag from BAM (added by BWA), as it causes umi_tools to fail
+        samtools view -h {input.bam} --remove-tag XS -b > {input.bam}.no_XS.bam;
+        featureCounts -a {input.gtf} -o {output.counts} -R BAM {input.bam}.no_XS.bam -T {params.threads} -t {params.feature_type} > {log} 2>&1;
+        rm -f {input.bam}.no_XS.bam {input.bam}.featureCounts.bam;
+        """
+
+rule sort_index:
+    input:
+        bam = rules.assign_to_genes.output.bam
+    output:
+        sorted_tagged_bam = "10X_PBMC/04_count/pbmc_granulocyte_sorted_10k_tagged_sorted.bam",
+        bai_tagged_bam = "10X_PBMC/04_count/pbmc_granulocyte_sorted_10k_tagged_sorted.bam.bai"
+    params:
+        dir = "10X_PBMC/04_count/",
+        threads = 8
+    conda:
+        "eRNA_samtools"
+    log:
+        "10X_PBMC/04_count/sort_index.log"
+    shell:
+        """
+        mkdir -p {params.dir};
+        samtools sort -@ {params.threads} -m 8G {input.bam} -o {output.sorted_tagged_bam} > {log} 2>&1;
+        samtools index {output.sorted_tagged_bam} >> {log} 2>&1;
+        """
+rule count_per_cell:
+    input:
+        sorted_tagged_bam = rules.sort_index.output.sorted_tagged_bam
+    output:
+        count_matrix = "10X_PBMC/04_count/pbmc_granulocyte_sorted_10k_counts_per_cell.txt",
+    params:
+        dir = "10X_PBMC/04_count/"
+    conda:
+        "eRNA_umi_tools"
+    log:
+        "10X_PBMC/04_count/count_per_cell.log"
+    shell:
+        """
+        umi_tools count --per-gene --gene-tag=XT --assigned-status-tag=XS \
+        --per-cell  -I {input.sorted_tagged_bam} -S {output.count_matrix} \
+        --wide-format-cell-counts > {log} 2>&1;
         """
