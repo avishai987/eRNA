@@ -1,7 +1,7 @@
-name: eRNA_cutadapt
+name: eRNA_sinto
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
-  -   - bioconda::cutadapt
+  - bioconda::sinto=0.10.1
