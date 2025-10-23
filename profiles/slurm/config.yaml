@@ -45,6 +45,29 @@ set-resources:
         runtime: 360  # in minutes
         cpus: 1
         cpus_per_task: 8
+    PBMC_10X_assign_to_genes:
+        mem_mb: 64000
+        runtime: 360  # in minutes
+        cpus: 1
+        cpus_per_task: 8
+    PBMC_10X_sort_index:
+        mem_mb: 71680
+        runtime: 120  # in minutes
+        cpus_per_task: 8
+    PBMC_10X_count_per_cell:
+        mem_mb: 64000
+        runtime: 240  # in minutes
+    PBMC_10X_ATAC_extract_lane:
+        mem_mb: 16000
+        runtime: 480  # in minutes
+    PBMC_10X_ATAC_filter_barcodes:
+        mem_mb: 16000
+        runtime: 480  # in minutes
+    PBMC_10X_ATAC_count_fragments:
+        mem_mb: 64000
+        runtime: 480  # in minutes
+        cpus: 1
+        cpus_per_task: 12
     snare_bwa_align:
         mem_mb: 64000
         runtime: 180  # in minutes
@@ -66,7 +89,7 @@ set-resources:
 
 seconds-between-status-checks: 2
 max-status-checks-per-second: 1
-jobs: 1
+jobs: 8
 keep-incomplete: true
 use-conda: true
 slurm-init-seconds-before-status-checks: 5
