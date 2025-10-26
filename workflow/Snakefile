@@ -38,6 +38,10 @@ module PBMC_10X_ATAC:
     snakefile: "PBMC_10X_ATAC.smk"
 use rule * from PBMC_10X_ATAC as PBMC_10X_ATAC_*
 
+module PBMC_10X_analysis:
+    snakefile: "PBMC_10X_analysis.smk"
+use rule * from PBMC_10X_analysis as PBMC_10X_analysis_*
+
 module test:
     snakefile: "test.smk"
 
