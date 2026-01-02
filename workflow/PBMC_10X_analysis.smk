@@ -1,60 +1,59 @@
-module PBMC_10X_RNA:
-    snakefile: "PBMC_10X_RNA.smk"
-
-
-use rule * from PBMC_10X_RNA as PBMC_10X_RNA_*
-
-module PBMC_10X_ATAC:
-    snakefile: "PBMC_10X_ATAC.smk"
-use rule * from PBMC_10X_ATAC as PBMC_10X_ATAC_*
-
-
-module snare_star:
-    snakefile: "snare.smk"
-
-use rule * from snare_star
 
 rule download_pbmc_enhancers:
     input:
-        enhancers_file = "10X_PBMC/enhancers/enhancer_links.txt"
+        enhancers_file = "10X_PBMC/cell_type_enhancers/enhancer_links.txt",
+        combine_enhancers_script = "scripts/combine_enhancers_per_cellType.sh"
     output:
-        B_cell_blood = "10X_PBMC/enhancers/B_cell_blood.bed",
-        CD4 = "10X_PBMC/enhancers/CD4+.bed",
-        CD8 = "10X_PBMC/enhancers/CD8+.bed",
-        CD19 = "10X_PBMC/enhancers/CD19+.bed",
-        CD20 = "10X_PBMC/enhancers/CD20+.bed",
-        CD14 = "10X_PBMC/enhancers/CD14+.bed",
-        CD14_monocyte = "10X_PBMC/enhancers/CD14+_monocyte.bed"
+        combined_enhancers_loci = "10X_PBMC/cell_type_enhancers/combined_enhancers_loci.bed"
     params:
-        dir = "10X_PBMC/enhancers/"
+        dir = "10X_PBMC/cell_type_enhancers/"
     log:
-        "10X_PBMC/enhancers/download_pbmc_enhancers.log"
+        "10X_PBMC/cell_type_enhancers/download_pbmc_enhancers.log"
     shell:
         '''
         mkdir -p {params.dir};
-        wget  -i {input.enhancers_file} -P {params.dir} -o {log};
+        wget  -i {input.enhancers_file} -P {params.dir}  > {log} 2>&1;
+        {input.combine_enhancers_script} {output.combined_enhancers_loci} {params.dir} >> {log} 2>&1;
         '''
         
 rule intersect_with_unique_enhancers:
     input:
-        pbmc_enhancers = "10X_PBMC/enhancers/{cell_type}.bed",
-        unique_enhancers = rules.snare_07_unique_enhancers.output.uniqe_enhancers
+        pbmc_enhancers = rules.download_pbmc_enhancers.output.combined_enhancers_loci,
+        unique_enhancers = config["enhancers_to_count"]["encode_bed"]
     output:
-        intersected_enhancers = "10X_PBMC/enhancers/enhancer_per_cell_type/{cell_type}_enhancers.tsv"
+        intersected_enhancers = "10X_PBMC/cell_type_enhancers/PBMC_enhancers_id.tsv"
     conda:
         "eRNA_bedtools"
     params:
         fraction = 0.5,
-        dir = "10X_PBMC/enhancers/enhancer_per_cell_type/"
+        dir = "10X_PBMC/cell_type_enhancers/"
     shell:
         '''
         #remove 'chr' prefix
         sed -i 's/^chr//g' {input.pbmc_enhancers};
-        mkdir -p {params.dir};
-        bedtools intersect -a {input.unique_enhancers} -b {input.pbmc_enhancers} -f {params.fraction} | cut -f 4 > {output.intersected_enhancers};
+        bedtools intersect -a {input.unique_enhancers} -b {input.pbmc_enhancers} -f {params.fraction}  -wb | cut -f 4,9 > {output.intersected_enhancers};
         '''
 
-rule intersect_all_pbmc_enhancers:
+#render scripts/PBMC_10K/erna_preprocess.ipynb
+rule erna_preprocess:
     input:
-        expand("10X_PBMC/enhancers/enhancer_per_cell_type/{cell_type}_enhancers.tsv", 
-               cell_type=["B_cell_blood", "CD4+", "CD8+", "CD19+", "CD20+", "CD14+", "CD14+_monocyte"])
+        script = "scripts/PBMC_10K/erna_preprocess.ipynb",
+        rna_enhancers_counts_path = "10X_PBMC/04_count/pbmc_granulocyte_sorted_10k_counts_per_cell.txt",
+        enhancers_metadata = "Analysis/enhancers/ensembl/ensembl_enhancers_metadata.txt"
+    output:
+        nb_out = "10X_PBMC/05_erna_preprocess/erna_preprocess.ipynb",
+        report = "10X_PBMC/05_erna_preprocess/erna_preprocess.html",
+        filtered_erna = "10X_PBMC/05_erna_preprocess/filtered_erna_pbmc_granulocyte_sorted_10k.rds"
+    conda:
+        "eRNA_jupyter"
+    params:
+        dir = "10X_PBMC/05_erna_preprocess/"
+    shell:
+        '''
+        mkdir -p {params.dir};
+        papermill {input.script} {output.nb_out} \
+        -p min_cells 10 -p min_enhancer_counts 10 -p rna_enhancers_counts_path {input.rna_enhancers_counts_path}\
+        -k R --language R \
+        && jupyter nbconvert --to html {output.nb_out} --output-dir {params.dir} 
+        '''
+

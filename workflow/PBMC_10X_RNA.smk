@@ -4,14 +4,13 @@
 # ---------------------------------------------------------------------------- #
 #data description link: https://support.10xgenomics.com/single-cell-multiome-atac-gex/datasets/1.0.0/pbmc_granulocyte_sorted_10k
 
-hg_38_bwa_index = "/sci/data/reference_data/Homo_sapiens/Ensembl/GRCh38/Sequence/BWAIndex/genome.fa"
-
 
 rule download_gex_matrix:
     params:
         dir = "10X_PBMC/01_raw_data/gex_matrix/"
     output:
-        "10X_PBMC/01_raw_data/gex_matrix/log.txt"
+        log = "10X_PBMC/01_raw_data/gex_matrix/log.txt",
+        barcodes = config["PBMC_10X"]["cells_whitelist"]
     shell:
         '''
         mkdir -p {params.dir}
@@ -39,34 +38,24 @@ rule download_fastq:
         {params.dir}
         > {output.log} 2>&1;
         '''
-#check md5sum
-rule PBMC_10X_03_check_md5sum:
-    input:
-        script = "scripts/md5sum.sh",
-        fastq = rules.download_fastq.output.fastq
-    output:
-        log = "10X_PBMC/01_raw_data/check_md5sum_log.txt"
-    params:
-        dir = "10X_PBMC/01_raw_data/"
-    shell: 
-        '''
-        mkdir -p {params.dir};
-        {input.script} \
-        {input.fastq} \ 
-        > {output.log} 2>&1;
-        '''
+
         
-#untar pbmc_granulocyte_sorted_10k_fastqs.tar
+# untar pbmc_granulocyte_sorted_10k_fastqs.tar
 rule untar_fastq:
     input:
-        fastq = rules.download_fastq.output.fastq
+        fastq_tar = rules.download_fastq.output.fastq
     output:
-        log = "10X_PBMC/01_raw_data/untar_fastq_log.txt"
+        log = "10X_PBMC/01_raw_data/untar_fastq_log.txt",
+        fastq_rna_files = expand(
+            "10X_PBMC/01_raw_data/pbmc_granulocyte_sorted_10k/gex/pbmc_granulocyte_sorted_10k_S1_{lane}_{read}_001.fastq.gz",
+            lane=["L003", "L004"],
+            read=["R1", "R2"]
+        )
     params:
         dir = "10X_PBMC/01_raw_data/"
     shell: 
         '''
-        tar -xvf {input.fastq} --directory {params.dir} \
+        tar -xvf {input.fastq_tar} --directory {params.dir} \
         > {output.log} 2>&1;
         '''
 
@@ -92,7 +81,7 @@ rule extract:
     input:
         fastq_R1 = rules.concatenation.output.R1,
         fastq_R2 = rules.concatenation.output.R2,
-        whitelist = "10X_PBMC/01_raw_data/gex_matrix/filtered_feature_bc_matrix/barcodes.tsv.gz"
+        whitelist = config["PBMC_10X"]["cells_whitelist"]
     output:
         fastq_R2_extracted = "10X_PBMC/02_extract/pbmc_granulocyte_sorted_10k_R2_extracted.fastq.gz"
     params:
@@ -113,10 +102,7 @@ rule extract:
         --log={log} \
         --whitelist {params.dir}/whitelist.tsv | pigz -c -p 8 > {output.fastq_R2_extracted}
         """
-module snare_star:
-    snakefile: "snare.smk"
 
-use rule * from snare_star
 
 rule align:
     input:
@@ -126,7 +112,7 @@ rule align:
     params:
         dir = "10X_PBMC/03_align/",
         cores = 8,
-        ref_genome = hg_38_bwa_index
+        ref_genome = config["hg_38_bwa_index"]
     conda:
         "eRNA_bwa"
     log:
@@ -140,7 +126,7 @@ rule align:
 rule assign_to_genes:
     input:
         bam = rules.align.output.bam,
-        gtf = rules.snare_09_bed_to_gtf_enhancers.output.gtf
+        gtf = config["enhancers_to_count"]["encode_gtf"]
     output:
         counts = "10X_PBMC/04_count/pbmc_granulocyte_sorted_10k_counts.txt",
         bam = "10X_PBMC/04_count/pbmc_granulocyte_sorted_10k.bam.no_XS.bam.featureCounts.bam",
@@ -197,3 +183,4 @@ rule count_per_cell:
         --per-cell  -I {input.sorted_tagged_bam} -S {output.count_matrix} \
         --wide-format-cell-counts > {log} 2>&1;
         """
+

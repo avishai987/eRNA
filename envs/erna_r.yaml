@@ -24,7 +24,7 @@ dependencies:
   - r-gridextra
   - r-kableextra
   - r-knitr
-  - r-matrix
+  - r-matrix=1.6_1
   - bioconda::r-archr=1.0.3
   - conda-forge::r-biocmanager
   - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg38
