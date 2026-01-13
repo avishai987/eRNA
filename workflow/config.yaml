@@ -1,11 +1,5 @@
 hg_38_bwa_index: "/sci/data/reference_data/Homo_sapiens/Ensembl/GRCh38/Sequence/BWAIndex/genome.fa"
 
-PBMC_10X:
-  cells_whitelist: "10X_PBMC/01_raw_data/gex_matrix/filtered_feature_bc_matrix/barcodes.tsv.gz"
-  atac_matrix_counts: "10X_PBMC/ATAC/01_count_fragments/pbmc_granulocyte_sorted_10k_enhancer_counts.mtx"
-  atac_matrix_barcode: "10X_PBMC/ATAC/01_count_fragments/pbmc_granulocyte_sorted_10k_barcodes.tsv"
-  atac_matrix_features: "10X_PBMC/ATAC/01_count_fragments/pbmc_granulocyte_sorted_10k_features.tsv"
-
 enhancers_to_count:
-  encode_bed: "/sci/labs/yotamd/lab_share/avishai.wizel/Projects/eRNA/Analysis/enhancers/ensembl/uniqe_enhancers.bed"
-  encode_gtf: "/sci/labs/yotamd/lab_share/avishai.wizel/Projects/eRNA/Analysis/enhancers/ensembl/unique_enhancers_log.txt"
+  bed: "Analysis/enhancers/tcea_FANTOM/tcea_FANTOM_filtered_enhancers.bed"
+  gtf: "Analysis/enhancers/tcea_FANTOM/tcea_FANTOM_filtered_enhancers.gtf"
