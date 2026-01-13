@@ -1,79 +1,152 @@
 #  get_genes_annotations 
-# get genes and regulatory features annotations from ensembl
-# combine both annotations into one gff file (all_with_regulation_annotaions)
-# all_with_regulation_annotaions contains all enhancers 
-rule get_genes_annotations:
-    input:
-        script = "scripts/get_genes_annotation.sh"
+# get genes annotations from ensembl
+# download genes annotation https://ftp.ensembl.org/pub/release-113/gff3/homo_sapiens/Homo_sapiens.GRCh38.113.gff3.gz
+rule download_genes_annotation:
     output:
-        log = "Analysis/enhancers/ensembl/raw/download_log.txt",
-        features_gff = "Analysis/enhancers/ensembl/raw/Homo_sapiens.GRCh38.113.gff3",
-        regulation_gff = "Analysis/enhancers/ensembl/raw/Homo_sapiens.GRCh38.regulatory_features.v113.gff3",
-        all_with_regulation_annotaions = "Analysis/enhancers/ensembl/raw/Homo_sapiens.GRCh38.with_regulatory_features.v113.gff3",
+        genes_annotation = "Analysis/enhancers/genes_annotation/Homo_sapiens.GRCh38.113.gff3",
+        hg19ToHg38_over_chain = "Analysis/enhancers/genes_annotation/hg19ToHg38.over.chain.gz"
     params:
-        dir = "Analysis/enhancers/ensembl/raw/"
+        dir = "Analysis/enhancers/genes_annotation/"
+    shell:
+        '''
+        wget https://ftp.ensembl.org/pub/release-113/gff3/homo_sapiens/Homo_sapiens.GRCh38.113.gff3.gz -P {params.dir}
+        gunzip {params.dir}Homo_sapiens.GRCh38.113.gff3.gz
+        wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz -P {params.dir}
+        '''
+
+#download regulatory features and convert to bed
+rule set_ensemble_regulatory_features:
+    input:
+        script = "scripts/ensembl_gff_to_bed.sh",
+    output:
+        regulation_gff = "Analysis/enhancers/ensembl/Homo_sapiens.GRCh38.regulatory_features.v113.gff3",
+        regulation_bed = "Analysis/enhancers/ensembl/Homo_sapiens.GRCh38.regulatory_features.v113.bed"
+    params:
+        dir = "Analysis/enhancers/ensembl/"
     shell:
         '''
         mkdir -p {params.dir};
-		{input.script} \
-        {params.dir} \
-        {output.all_with_regulation_annotaions} \
-        > {output.log} 2>&1
+        wget -O {output.regulation_gff}.gz https://ftp.ensembl.org/pub/release-113/regulation/homo_sapiens/GRCh38/annotation/Homo_sapiens.GRCh38.regulatory_features.v113.gff3.gz
+        gunzip {output.regulation_gff}.gz
+        {input.script} {output.regulation_gff} {output.regulation_bed}
         '''
 
-# get enhancers regions that not overlap with RNA-producing or gene-associated regions
-rule get_unique_enhancers:
+#from https://bioinformatics.mdanderson.org/Supplements/Super_Enhancer/TCEA_website/parts/2_Samples_and_annotation.html
+#download, ungzip, convert to hg38 and to GTF, remove "chr" from first col
+rule set_tcea_fantom_enhancers:
     input:
-        script = "scripts/filter_unique_enhancers_regions.sh",
-        features_gff = rules.get_genes_annotations.output.features_gff,
-        regulation_gff = rules.get_genes_annotations.output.regulation_gff
+        hg19ToHg38_over_chain = rules.download_genes_annotation.output.hg19ToHg38_over_chain
     output:
-        log = "Analysis/enhancers/ensembl/unique_enhancers_log.txt",
-        uniqe_enhancers = config["enhancers_to_count"]["encode_bed"]
+        enhancers_bed = "Analysis/enhancers/tcea_FANTOM/F03_nonExon_FANTOM5_typical_enhancers_hg38.bed"
+    params:
+        dir = "Analysis/enhancers/tcea_FANTOM/"
     conda: 
         "eRNA_bedtools"
     shell:
         '''
-		{input.script} \
-		{input.features_gff} \
-		{input.regulation_gff} \
-        {output.uniqe_enhancers} \
-        > {output.log} 2>&1
-        '''
+        wget https://bioinformatics.mdanderson.org/Supplements/Super_Enhancer/7_Typical_enhancer_Dec2020_update_FANTOM_60k/F03_nonExon_FANTOM5_typical_enhancers.bed.gz -P {params.dir}
+        gunzip {params.dir}F03_nonExon_FANTOM5_typical_enhancers.bed.gz
+        liftOver {params.dir}F03_nonExon_FANTOM5_typical_enhancers.bed {input.hg19ToHg38_over_chain} {output.enhancers_bed} {params.dir}unMapped.bed
+        # remove "chr" from first column
+        sed -i 's/chr//g' {output.enhancers_bed}
+        # keep only standard chromosomes
+        grep -E '^[0-9XYM]{{1,2}}[[:space:]]' {output.enhancers_bed} > {output.enhancers_bed}.tmp
+        mv {output.enhancers_bed}.tmp {output.enhancers_bed}
+        '''   
 
-# convert bed to GTF- req for htseq
-rule bed_to_gtf_enhancers:
+ENHANCER_BED_MAP = {
+    "ensembl": rules.set_ensemble_regulatory_features.output.regulation_bed,
+    "tcea_FANTOM": rules.set_tcea_fantom_enhancers.output.enhancers_bed
+}
+
+rule filter_all_bed:
     input:
-        script = "scripts/bed_to_gtf.sh",
-        bed_file =rules.get_unique_enhancers.output.uniqe_enhancers,
+        expand("Analysis/enhancers/{name}/{name}_filtered_enhancers.bed", name=ENHANCER_BED_MAP.keys())
+
+rule filter_bed:
+    input:
+        enhancer = lambda wildcards: ENHANCER_BED_MAP[wildcards.name],
+        genes_annotation = rules.download_genes_annotation.output.genes_annotation,
+        bed_to_gtf_script = "scripts/bed_to_gtf.sh"
     output:
-        log = "Analysis/enhancers/ensembl/bed_to_gtf.log",
-        gtf = config["enhancers_to_count"]["encode_gtf"]
-    params:
-        dir = "Analysis/enhancers/ensembl/"
+        log = "Analysis/enhancers/{name}/filtered_enhancers_log.txt",
+        filtered_enhancers = "Analysis/enhancers/{name}/{name}_filtered_enhancers.bed",
+        filtered_enhancers_gtf = "Analysis/enhancers/{name}/{name}_filtered_enhancers.gtf"
+    conda: 
+        "eRNA_bedtools"
     shell:
-        '''
-        mkdir -p {params.dir};
-		{input.script} \
-        {input.bed_file} {output.gtf}\
-        > {output.log} 2>&1;
-        '''
+        """
+        bedtools intersect -a {input.enhancer} -b <(awk '$3 == "exon"' {input.genes_annotation}) -v  > {output.filtered_enhancers}  2> {output.log}
+        {input.bed_to_gtf_script} {output.filtered_enhancers} {output.filtered_enhancers_gtf} 2>&1 | tee -a {output.log}
+        """
+
+ENHANCER_metadata_MAP = {
+    "ensembl": rules.set_ensemble_regulatory_features.output.regulation_bed,
+    "tcea_FANTOM": rules.set_tcea_fantom_enhancers.output.enhancers_bed
+}
+
+rule get_all_enhancers_meta:
+    input:
+        expand("Analysis/enhancers/{name}/{name}_enhancers_metadata.txt", name=ENHANCER_metadata_MAP.keys())
+        
 rule get_enhancers_meta:
     input:
         script = "scripts/get_enhancers_metadata.sh",
-        uniqe_enhancers = rules.get_unique_enhancers.output.uniqe_enhancers,
-        features_gff = rules.get_genes_annotations.output.features_gff
+        enhancers_bed = lambda wildcards: ENHANCER_metadata_MAP[wildcards.name],
+        genes_annotation = rules.download_genes_annotation.output.genes_annotation
     output:
-        log = "Analysis/enhancers/ensembl/enhancers_metadata_log.txt",
-        metadata = "Analysis/enhancers/ensembl/ensembl_enhancers_metadata.txt"
+        log = "Analysis/enhancers/{name}/{name}_enhancers_metadata_log.txt",
+        metadata = "Analysis/enhancers/{name}/{name}_enhancers_metadata.txt"
     params:
-        dir = "Analysis/enhancers/ensembl/"
+        dir = "Analysis/enhancers/{name}/"
     shell:
         '''
         mkdir -p {params.dir};
-		{input.script} \
-        {input.uniqe_enhancers} \
-        {input.features_gff} \
+        {input.script} \
+        {input.enhancers_bed} \
+        {input.genes_annotation} \
         {output.metadata} \
         > {output.log} 2>&1;
         '''
+
+# rule get_enhancers_meta:
+#     input:
+#         script = "scripts/get_enhancers_metadata.sh",
+#         uniqe_enhancers = rules.get_unique_enhancers.output.uniqe_enhancers,
+#         features_gff = rules.download_genes_annotation.output.genes_annotation
+#     output:
+#         log = "Analysis/enhancers/ensembl/enhancers_metadata_log.txt",
+#         metadata = "Analysis/enhancers/ensembl/ensembl_enhancers_metadata.txt"
+#     params:
+#         dir = "Analysis/enhancers/ensembl/"
+#     shell:
+#         '''
+#         mkdir -p {params.dir};
+# 		{input.script} \
+#         {input.uniqe_enhancers} \
+#         {input.features_gff} \
+#         {output.metadata} \
+#         > {output.log} 2>&1;
+#         '''
+
+
+
+# #create metadata for tcea enhancers
+# rule get_tcea_enhancers_meta:
+#     input:
+#         script = "scripts/get_enhancers_metadata.sh",
+#         tcea_unique_enhancers = rules.tcea_filter_enhancers.output.tcea_unique_enhancers,
+        
+#     output:
+#         log = "Analysis/enhancers/tcea_FANTOM/tcea_enhancers_metadata_log.txt",
+#         metadata = "Analysis/enhancers/tcea_FANTOM/tcea_enhancers_metadata.txt"
+#     params:
+#         dir = "Analysis/enhancers/tcea_FANTOM/"
+#     shell:
+#         '''
+#         mkdir -p {params.dir};
+#         {input.script} \
+#         {input.tcea_unique_enhancers} \
+#         {output.metadata} \
+#         > {output.log} 2>&1;
+#         '''

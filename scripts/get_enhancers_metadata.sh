@@ -11,7 +11,10 @@ enhancers_bed=$1
 gff3_file=$2
 output_file=$3
 
-# Run the bedtools and awk commands with the provided arguments
+# Add header line to the output file
+echo -e "chr\tstart\tend\tid\ttype\tgene_intersection\tbp_to_closest_gene\tlength" > "$output_file"
+
+# Append the processed data to the output file
 bedtools closest -a <(sort -k1,1 -k2,2n "$enhancers_bed") \
     -b <(awk '$3 == "gene"' "$gff3_file" | sort -k1,1 -k4,4n) -d -t first | \
 awk 'BEGIN{OFS="\t"} {
@@ -19,4 +22,4 @@ awk 'BEGIN{OFS="\t"} {
     len = $3 - $2;
     label = (dist == 0 ? "intronic" : "intergenic"); 
     print $1, $2, $3, $4, $5, label, dist, len
-}' > "$output_file"
+}' >> "$output_file"
