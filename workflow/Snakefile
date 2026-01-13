@@ -21,21 +21,12 @@ module enhancers_to_count:
     config: config
 use rule * from enhancers_to_count as enhancers_*
 
-module PBMC_10X_RNA:
-    snakefile: "PBMC_10X_RNA.smk"
-    config: config
-use rule * from PBMC_10X_RNA as PBMC_10X_RNA_*
 
-module PBMC_10X_ATAC:
-    snakefile: "PBMC_10X_ATAC.smk"
+module PBMC_10X:
+    snakefile: "PBMC_10X.smk"
     config: config
-use rule * from PBMC_10X_ATAC as PBMC_10X_ATAC_*
+use rule * from PBMC_10X as PBMC_10X_*
 
-module PBMC_10X_analysis:
-    snakefile: "PBMC_10X_analysis.smk"
-    config: config
-
-use rule * from PBMC_10X_analysis as PBMC_10X_*
 
 
 
