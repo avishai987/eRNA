@@ -10,5 +10,5 @@ awk -v OFS="\t" '$3 == "enhancer" {
     if (match($9, /ID=([^;]+)/, arr)) {
         id = arr[1]
     }
-    print $1, $4-1, $5, id, $3
+    print $1, $4-1, $5, id
 }' "$REGULATORY_GFF" > "$OUTPUT_BED"

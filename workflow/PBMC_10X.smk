@@ -266,11 +266,11 @@ rule download_pbmc_enhancers:
         wget  -i {input.enhancers_file} -P {params.dir}  > {log} 2>&1;
         {input.combine_enhancers_script} {output.combined_enhancers_loci} {params.dir} >> {log} 2>&1;
         '''
-        
-rule intersect_with_unique_enhancers:
+
+rule intersect_with_filtered_enhancers:
     input:
         pbmc_enhancers = rules.download_pbmc_enhancers.output.combined_enhancers_loci,
-        unique_enhancers = config["enhancers_to_count"]["bed"]
+        filtered_enhancers = config["enhancers_to_count"]["bed"]
     output:
         intersected_enhancers = "Analysis/10X_PBMC/cell_type_enhancers/PBMC_enhancers_id.tsv"
     conda:
@@ -282,7 +282,7 @@ rule intersect_with_unique_enhancers:
         '''
         #remove 'chr' prefix
         sed -i 's/^chr//g' {input.pbmc_enhancers};
-        bedtools intersect -a {input.unique_enhancers} -b {input.pbmc_enhancers} -f {params.fraction}  -wb | cut -f 4,9 > {output.intersected_enhancers};
+        bedtools intersect -a {input.filtered_enhancers} -b {input.pbmc_enhancers} -f {params.fraction}  -wb | cut -f 4,8 > {output.intersected_enhancers};
         '''
 
 # ------------------------------eRNA data analysis------------------------------------- #
