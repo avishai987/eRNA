@@ -1,0 +1,1 @@
+remotes::install_cran("camcorder",upgrade = "never")

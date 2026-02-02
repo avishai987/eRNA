@@ -12,6 +12,7 @@ dependencies:
   - r-ggpubr=0.6.1
   - libstdcxx=15.1.0
   - ipykernel=6.30.1
+  - conda-forge::r-fnn=1.1.4.1
   - r-languageserver
   - r-irkernel
   - anaconda::jupyter_console
@@ -28,3 +29,4 @@ dependencies:
   - bioconda::r-archr=1.0.3
   - conda-forge::r-biocmanager
   - bioconda::bioconductor-bsgenome.hsapiens.ucsc.hg38
+  - conda-forge::ark

@@ -88,6 +88,9 @@ set-resources:
     PBMC_10X_erna_preprocess:
         mem_mb: 65000
         runtime: 5  # in minutes
+    PBMC_10X_analyze_by_ATAC:
+        mem_mb: 65000
+        runtime: 30  # in minutes
 
     
 
