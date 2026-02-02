@@ -321,7 +321,7 @@ rule erna_preprocess:
     input:
         script = "scripts/PBMC_10K/erna_preprocess.ipynb",
         rna_enhancers_counts_path = "Analysis/10X_PBMC/04_count/pbmc_granulocyte_sorted_10k_counts_per_cell.txt",
-        enhancers_metadata = "Analysis/enhancers/ensembl/ensembl_enhancers_metadata.txt"
+        enhancers_metadata = config["enhancers_to_count"]["metadata"]
     output:
         nb_out = "Analysis/10X_PBMC/05_erna_preprocess/erna_preprocess.ipynb",
         report = "Analysis/10X_PBMC/05_erna_preprocess/erna_preprocess.html",
@@ -343,8 +343,11 @@ rule analyze_by_ATAC:
     input:
         script = "scripts/PBMC_10K/analyze_by_ATAC.ipynb",
         filtered_erna = rules.erna_preprocess.output.filtered_erna,
-        atac_metadata = "Analysis/10X_PBMC/03_ATAC/pbmc_granulocyte_sorted_10k_atac_metadata.txt",
-        atac_enhancer_counts = "Analysis/10X_PBMC/03_ATAC/pbmc_granulocyte_sorted_10k_atac_counts_per_enhancer.txt"
+        cell_type_enhancers = rules.intersect_with_filtered_enhancers.output.intersected_enhancers,
+        enhancers_metadata = config["enhancers_to_count"]["metadata"],
+        atac_counts = rules.count_fragments.output.counts,
+        atac_barcodes = rules.count_fragments.output.barcodes,
+        atac_features = rules.count_fragments.output.features
     output:
         nb_out = "Analysis/10X_PBMC/06_analyze_by_ATAC/analyze_by_ATAC.ipynb",
         report = "Analysis/10X_PBMC/06_analyze_by_ATAC/analyze_by_ATAC.html"
@@ -357,8 +360,11 @@ rule analyze_by_ATAC:
         mkdir -p {params.dir};
         papermill {input.script} {output.nb_out} \
         -p filtered_erna_path {input.filtered_erna} \
-        -p atac_metadata_path {input.atac_metadata} \
-        -p atac_enhancer_counts_path {input.atac_enhancer_counts} \
+        -p cell_type_enhancers_path {input.cell_type_enhancers} \
+        -p enhancers_metadata_path {input.enhancers_metadata} \
+        -p atac_counts_path {input.atac_counts} \
+        -p atac_barcodes_path {input.atac_barcodes} \
+        -p atac_features_path {input.atac_features} \
         -k R --language R \
         && jupyter nbconvert --to html {output.nb_out} --output-dir {params.dir} 
         '''
