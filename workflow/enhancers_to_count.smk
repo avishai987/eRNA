@@ -54,9 +54,26 @@ rule set_tcea_fantom_enhancers:
         mv {output.enhancers_bed}.tmp {output.enhancers_bed}
         '''   
 
+rule set_tcea_super_enhancers:
+    input:
+        hg19ToHg38_over_chain = rules.download_genes_annotation.output.hg19ToHg38_over_chain,
+        script = "scripts/set_tcea_super_enhancers.sh"
+    output:
+        super_enhancers_bed = "Analysis/enhancers/tcea_super_enhancers/tcea_superEnhancers.bed"
+    params:
+        dir = "Analysis/enhancers/tcea_super_enhancers/"
+    conda: 
+        "eRNA_bedtools"
+    shell:
+        '''
+        mkdir -p {params.dir};
+        {input.script} {params.dir} {input.hg19ToHg38_over_chain} {output.super_enhancers_bed}
+        '''
+
 ENHANCER_BED_MAP = {
     "ensembl": rules.set_ensemble_regulatory_features.output.regulation_bed,
-    "tcea_FANTOM": rules.set_tcea_fantom_enhancers.output.enhancers_bed
+    "tcea_FANTOM": rules.set_tcea_fantom_enhancers.output.enhancers_bed,
+    "tcea_super_enhancers": rules.set_tcea_super_enhancers.output.super_enhancers_bed
 }
 
 rule filter_all_bed:
@@ -82,7 +99,8 @@ rule filter_bed:
 
 ENHANCER_metadata_MAP = {
     "ensembl": rules.set_ensemble_regulatory_features.output.regulation_bed,
-    "tcea_FANTOM": rules.set_tcea_fantom_enhancers.output.enhancers_bed
+    "tcea_FANTOM": rules.set_tcea_fantom_enhancers.output.enhancers_bed,
+    "tcea_super_enhancers": rules.set_tcea_super_enhancers.output.super_enhancers_bed
 }
 
 rule get_all_enhancers_meta:
@@ -108,45 +126,3 @@ rule get_enhancers_meta:
         {output.metadata} \
         > {output.log} 2>&1;
         '''
-
-# rule get_enhancers_meta:
-#     input:
-#         script = "scripts/get_enhancers_metadata.sh",
-#         uniqe_enhancers = rules.get_unique_enhancers.output.uniqe_enhancers,
-#         features_gff = rules.download_genes_annotation.output.genes_annotation
-#     output:
-#         log = "Analysis/enhancers/ensembl/enhancers_metadata_log.txt",
-#         metadata = "Analysis/enhancers/ensembl/ensembl_enhancers_metadata.txt"
-#     params:
-#         dir = "Analysis/enhancers/ensembl/"
-#     shell:
-#         '''
-#         mkdir -p {params.dir};
-# 		{input.script} \
-#         {input.uniqe_enhancers} \
-#         {input.features_gff} \
-#         {output.metadata} \
-#         > {output.log} 2>&1;
-#         '''
-
-
-
-# #create metadata for tcea enhancers
-# rule get_tcea_enhancers_meta:
-#     input:
-#         script = "scripts/get_enhancers_metadata.sh",
-#         tcea_unique_enhancers = rules.tcea_filter_enhancers.output.tcea_unique_enhancers,
-        
-#     output:
-#         log = "Analysis/enhancers/tcea_FANTOM/tcea_enhancers_metadata_log.txt",
-#         metadata = "Analysis/enhancers/tcea_FANTOM/tcea_enhancers_metadata.txt"
-#     params:
-#         dir = "Analysis/enhancers/tcea_FANTOM/"
-#     shell:
-#         '''
-#         mkdir -p {params.dir};
-#         {input.script} \
-#         {input.tcea_unique_enhancers} \
-#         {output.metadata} \
-#         > {output.log} 2>&1;
-#         '''

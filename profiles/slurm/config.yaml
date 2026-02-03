@@ -85,10 +85,16 @@ set-resources:
         runtime: 480  # in minutes
         cpus: 1
         cpus_per_task: 12
+    PBMC_10X_gex_clustering:
+        mem_mb: 65000
+        runtime: 20  # in minutes
     PBMC_10X_erna_preprocess:
         mem_mb: 65000
-        runtime: 5  # in minutes
+        runtime: 20  # in minutes
     PBMC_10X_analyze_by_ATAC:
+        mem_mb: 65000
+        runtime: 60  # in minutes
+    PBMC_10X_erna_exprs_analysis:
         mem_mb: 65000
         runtime: 30  # in minutes
 

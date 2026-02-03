@@ -368,3 +368,53 @@ rule analyze_by_ATAC:
         -k R --language R \
         && jupyter nbconvert --to html {output.nb_out} --output-dir {params.dir} 
         '''
+rule erna_exprs_analysis:
+    input:
+        script = "scripts/expression_analysis.ipynb",
+        filtered_erna = rules.erna_preprocess.output.filtered_erna,
+        enhancers_metadata = config["enhancers_to_count"]["metadata"],
+        cell_type_enhancers = rules.intersect_with_filtered_enhancers.output.intersected_enhancers,
+        cell_idents_path = rules.gex_clustering.output.idents_out,
+    output:
+        nb_out = "Analysis/10X_PBMC/07_erna_exprs_analysis/erna_exprs_analysis.ipynb",
+        report = "Analysis/10X_PBMC/07_erna_exprs_analysis/erna_exprs_analysis.html"
+    conda:
+        "eRNA_jupyter"
+    params:
+        dir = "Analysis/10X_PBMC/07_erna_exprs_analysis/"
+    shell:
+        '''
+        mkdir -p {params.dir};
+        papermill {input.script} {output.nb_out} \
+        -p filtered_erna_path {input.filtered_erna} \
+        -p enhancers_metadata_path {input.enhancers_metadata} \
+        -p cell_type_enhancers_path {input.cell_type_enhancers} \
+        -p cell_idents_path {input.cell_idents_path} \
+        -k R --language R \
+        && jupyter nbconvert --to html {output.nb_out} --output-dir {params.dir}
+        '''
+rule erna_clustering:
+    input:
+        script = "scripts/PBMC_10K/eRNA_clustering.ipynb",
+        filtered_erna = rules.erna_preprocess.output.filtered_erna,
+        cell_type_enhancers = rules.intersect_with_filtered_enhancers.output.intersected_enhancers,
+        cell_idents_path = rules.gex_clustering.output.idents_out,
+        enhancers_metadata = config["enhancers_to_count"]["metadata"]
+    output:
+        nb_out = "Analysis/10X_PBMC/08_erna_clustering/erna_clustering.ipynb",
+        report = "Analysis/10X_PBMC/08_erna_clustering/erna_clustering.html"
+    conda:
+        "eRNA_jupyter"
+    params:
+        dir = "Analysis/10X_PBMC/08_erna_clustering/"
+    shell:
+        '''
+        mkdir -p {params.dir};
+        papermill {input.script} {output.nb_out} \
+        -p filtered_erna_path {input.filtered_erna} \
+        -p cell_type_enhancers_path {input.cell_type_enhancers} \
+        -p cell_idents_path {input.cell_idents_path} \
+        -p enhancers_metadata_path {input.enhancers_metadata} \
+        -k R --language R \
+        && jupyter nbconvert --to html {output.nb_out} --output-dir {params.dir}
+        '''
