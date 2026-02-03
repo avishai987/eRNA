@@ -329,12 +329,16 @@ rule erna_preprocess:
     conda:
         "eRNA_jupyter"
     params:
-        dir = "Analysis/10X_PBMC/05_erna_preprocess/"
+        dir = "Analysis/10X_PBMC/05_erna_preprocess/",
+        lib_size_normalize = config["lib_size_normalize"]
     shell:
         '''
         mkdir -p {params.dir};
         papermill {input.script} {output.nb_out} \
         -p min_cells 10 -p min_enhancer_counts 10 -p rna_enhancers_counts_path {input.rna_enhancers_counts_path}\
+        -p lib_size_normalize {params.lib_size_normalize} \
+        -p enhancers_metadata_path {input.enhancers_metadata} \
+        -p filtered_erna_out_path {output.filtered_erna} \
         -k R --language R \
         && jupyter nbconvert --to html {output.nb_out} --output-dir {params.dir} 
         '''

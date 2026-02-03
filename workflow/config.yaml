@@ -4,3 +4,5 @@ enhancers_to_count:
   bed: "Analysis/enhancers/tcea_super_enhancers/tcea_super_enhancers_filtered_enhancers.bed"
   gtf: "Analysis/enhancers/tcea_super_enhancers/tcea_super_enhancers_filtered_enhancers.gtf"
   metadata: "Analysis/enhancers/tcea_super_enhancers/tcea_super_enhancers_enhancers_metadata.txt"
+
+lib_size_normalize: "gex"
