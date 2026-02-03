@@ -1,8 +1,10 @@
 hg_38_bwa_index: "/sci/data/reference_data/Homo_sapiens/Ensembl/GRCh38/Sequence/BWAIndex/genome.fa"
 
 enhancers_to_count:
-  bed: "Analysis/enhancers/tcea_super_enhancers/tcea_super_enhancers_filtered_enhancers.bed"
-  gtf: "Analysis/enhancers/tcea_super_enhancers/tcea_super_enhancers_filtered_enhancers.gtf"
-  metadata: "Analysis/enhancers/tcea_super_enhancers/tcea_super_enhancers_enhancers_metadata.txt"
+  bed: "Analysis/enhancers/ensembl/ensembl_filtered_enhancers.bed"
+  gtf: "Analysis/enhancers/ensembl/ensembl_filtered_enhancers.gtf"
+  metadata: "Analysis/enhancers/ensembl/ensembl_enhancers_metadata.txt"
 
-lib_size_normalize: "gex"
+lib_size_normalize: "erna" # options: "erna" or "gex" or "none"
+
+erna_len_normalize: true  # whether to length normalize erna counts

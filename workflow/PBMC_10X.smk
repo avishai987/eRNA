@@ -330,7 +330,8 @@ rule erna_preprocess:
         "eRNA_jupyter"
     params:
         dir = "Analysis/10X_PBMC/05_erna_preprocess/",
-        lib_size_normalize = config["lib_size_normalize"]
+        lib_size_normalize = config["lib_size_normalize"],
+        erna_len_normalize = config["erna_len_normalize"]
     shell:
         '''
         mkdir -p {params.dir};
@@ -339,6 +340,7 @@ rule erna_preprocess:
         -p lib_size_normalize {params.lib_size_normalize} \
         -p enhancers_metadata_path {input.enhancers_metadata} \
         -p filtered_erna_out_path {output.filtered_erna} \
+        -p erna_len_normalize {params.erna_len_normalize} \
         -k R --language R \
         && jupyter nbconvert --to html {output.nb_out} --output-dir {params.dir} 
         '''
