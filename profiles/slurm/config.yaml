@@ -97,7 +97,9 @@ set-resources:
     PBMC_10X_erna_exprs_analysis:
         mem_mb: 65000
         runtime: 30  # in minutes
-
+    PBMC_10X_erna_clustering:
+        mem_mb: 65000
+        runtime: 30  # in minutes
     
 
 seconds-between-status-checks: 2
@@ -106,3 +108,4 @@ jobs: 8
 keep-incomplete: true
 use-conda: true
 slurm-init-seconds-before-status-checks: 5
+rerun-triggers: [mtime,params, input, code ]
