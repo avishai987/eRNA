@@ -5,6 +5,6 @@ enhancers_to_count:
   gtf: "Analysis/enhancers/tcea_FANTOM/tcea_FANTOM_filtered_enhancers.gtf"
   metadata: "Analysis/enhancers/tcea_FANTOM/tcea_FANTOM_enhancers_metadata.txt"
 
-lib_size_normalize: "gex" # options: "erna" or "gex" or "none"
+lib_size_normalize: "erna" # options: "erna" or "gex" or "none"
 
-erna_len_normalize: false  # whether to length normalize erna counts
+erna_len_normalize: true  # whether to length normalize erna counts  
