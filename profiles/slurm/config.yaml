@@ -100,8 +100,38 @@ set-resources:
     PBMC_10X_erna_clustering:
         mem_mb: 65000
         runtime: 30  # in minutes
-    
-
+    LN_10X_download_fastq:
+        mem_mb: 8000
+        runtime: 720  # in minutes
+    LN_10X_untar_fastq:
+        mem_mb: 1000
+        runtime: 10  # in minutes
+    LN_10X_extract:
+        mem_mb: 16000
+        runtime: 150  # in minutes
+        cpus_per_task: 8
+    LN_10X_align:
+        mem_mb: 64000
+        runtime: 360  # in minutes
+        cpus: 1
+        cpus_per_task: 8
+    LN_10X_assign_to_genes:
+        mem_mb: 64000
+        runtime: 360  # in minutes
+        cpus: 1
+        cpus_per_task: 8
+    LN_10X_sort_index:
+        mem_mb: 71680
+        runtime: 120  # in minutes
+        cpus_per_task: 8
+    LN_10X_count_per_cell:
+        mem_mb: 64000
+        runtime: 240  # in minutes
+    LN_10X_count_fragments:
+        mem_mb: 64000
+        runtime: 480  # in minutes
+        cpus: 1
+        cpus_per_task: 12
 seconds-between-status-checks: 2
 max-status-checks-per-second: 1
 jobs: 8
