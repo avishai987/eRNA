@@ -28,7 +28,10 @@ module PBMC_10X:
 use rule * from PBMC_10X as PBMC_10X_*
 
 
-
+module LN_10X:
+    snakefile: "LN_10X.smk"
+    config: config
+use rule * from LN_10X as LN_10X_*
 
 
 module test2:
