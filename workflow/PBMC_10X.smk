@@ -2,7 +2,7 @@
 # ---------------------------------------------------------------------------- #
 #                               10X_PBMC_GEX_ATAC                              #
 # ---------------------------------------------------------------------------- #
-#data description link: https://support.10xgenomics.com/single-cell-multiome-atac-gex/datasets/1.0.0/pbmc_granulocyte_sorted_10k
+#data description link: https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-10-k-1-standard-1-0-0
 
 
 # ------------------------------RNA Process------------------------------------- #
